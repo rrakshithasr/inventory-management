@@ -1,0 +1,229 @@
+import pandas as pd
+import os
+
+FILE = "inventory.csv"
+
+# Create inventory file if it doesn't exist
+if not os.path.exists(FILE):
+    df = pd.DataFrame(columns=["ID", "Name", "Category", "Price", "Quantity"])
+    df.to_csv(FILE, index=False)
+
+
+def load_data():
+    return pd.read_csv(FILE)
+
+
+def save_data(df):
+    df.to_csv(FILE, index=False)
+
+
+def add_product():
+    df = load_data()
+
+    pid = input("Enter Product ID: ")
+
+    if pid in df["ID"].astype(str).values:
+        print("Product ID already exists!")
+        return
+
+    name = input("Enter Product Name: ")
+    category = input("Enter Category: ")
+
+    try:
+        price = float(input("Enter Price: "))
+        quantity = int(input("Enter Quantity: "))
+    except ValueError:
+        print("Invalid input!")
+        return
+
+    new_product = pd.DataFrame({
+        "ID": [pid],
+        "Name": [name],
+        "Category": [category],
+        "Price": [price],
+        "Quantity": [quantity]
+    })
+
+    df = pd.concat([df, new_product], ignore_index=True)
+    save_data(df)
+    print("Product Added Successfully!")
+
+
+def view_products():
+    df = load_data()
+
+    if df.empty:
+        print("Inventory is Empty!")
+    else:
+        print("\nInventory")
+        print(df.to_string(index=False))
+
+
+def search_product():
+    df = load_data()
+
+    pid = input("Enter Product ID: ")
+
+    result = df[df["ID"].astype(str) == pid]
+
+    if result.empty:
+        print("Product Not Found!")
+    else:
+        print(result.to_string(index=False))
+
+
+def update_product():
+    df = load_data()
+
+    pid = input("Enter Product ID to Update: ")
+
+    if pid not in df["ID"].astype(str).values:
+        print("Product Not Found!")
+        return
+
+    index = df[df["ID"].astype(str) == pid].index[0]
+
+    df.at[index, "Name"] = input("New Name: ")
+    df.at[index, "Category"] = input("New Category: ")
+
+    try:
+        df.at[index, "Price"] = float(input("New Price: "))
+        df.at[index, "Quantity"] = int(input("New Quantity: "))
+    except ValueError:
+        print("Invalid Input!")
+        return
+
+    save_data(df)
+    print("Product Updated Successfully!")
+
+
+def delete_product():
+    df = load_data()
+
+    pid = input("Enter Product ID to Delete: ")
+
+    if pid not in df["ID"].astype(str).values:
+        print("Product Not Found!")
+        return
+
+    df = df[df["ID"].astype(str) != pid]
+
+    save_data(df)
+
+    print("Product Deleted Successfully!")
+
+
+def sell_product():
+    df = load_data()
+
+    pid = input("Enter Product ID: ")
+
+    if pid not in df["ID"].astype(str).values:
+        print("Product Not Found!")
+        return
+
+    qty = int(input("Enter Quantity Sold: "))
+
+    index = df[df["ID"].astype(str) == pid].index[0]
+
+    if qty > df.at[index, "Quantity"]:
+        print("Not Enough Stock!")
+        return
+
+    df.at[index, "Quantity"] -= qty
+
+    save_data(df)
+
+    print("Product Sold Successfully!")
+
+
+def restock_product():
+    df = load_data()
+
+    pid = input("Enter Product ID: ")
+
+    if pid not in df["ID"].astype(str).values:
+        print("Product Not Found!")
+        return
+
+    qty = int(input("Enter Quantity to Add: "))
+
+    index = df[df["ID"].astype(str) == pid].index[0]
+
+    df.at[index, "Quantity"] += qty
+
+    save_data(df)
+
+    print("Stock Updated Successfully!")
+
+
+def low_stock():
+    df = load_data()
+
+    result = df[df["Quantity"] < 5]
+
+    if result.empty:
+        print("No Low Stock Products.")
+    else:
+        print(result.to_string(index=False))
+
+
+def inventory_value():
+    df = load_data()
+
+    df["Value"] = df["Price"] * df["Quantity"]
+
+    print(df[["Name", "Value"]].to_string(index=False))
+
+    print("\nTotal Inventory Value =", df["Value"].sum())
+
+
+while True:
+
+    print("\n========== INVENTORY MANAGEMENT SYSTEM ==========")
+    print("1. Add Product")
+    print("2. View Products")
+    print("3. Search Product")
+    print("4. Update Product")
+    print("5. Delete Product")
+    print("6. Sell Product")
+    print("7. Restock Product")
+    print("8. Low Stock Report")
+    print("9. Total Inventory Value")
+    print("10. Exit")
+
+    choice = input("Enter Choice: ")
+
+    if choice == "1":
+        add_product()
+
+    elif choice == "2":
+        view_products()
+
+    elif choice == "3":
+        search_product()
+
+    elif choice == "4":
+        update_product()
+
+    elif choice == "5":
+        delete_product()
+
+    elif choice == "6":
+        sell_product()
+
+    elif choice == "7":
+        restock_product()
+
+    elif choice == "8":
+        low_stock()
+
+    elif choice == "9":
+        inventory_value()
+
+    elif choice == "10":
+        print("Thank You!")
+        break
+
+    else:
+        print("Invalid Choice!")
